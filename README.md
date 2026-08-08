@@ -115,7 +115,8 @@ dengan `brentq` pada dLCC/dL = 0.
 
 1. **Mesh independence study tidak dilaksanakan** — seluruh simulasi memakai satu
    konfigurasi mesh. Kredibilitas didukung validasi K0 terhadap korelasi
-   Churchill-Chu (selisih 3,14%) dan konservasi energi 0,0000–0,0147%.
+   Churchill-Chu (galat 3,71%) dan reprodusibilitas hasil pada pengulangan
+   simulasi.
 2. **Validasi Churchill-Chu tidak terpenuhi pada K1–K4** (15,18–50,04%). Gap
    membesar sistematis seiring ketebalan; penyebabnya belum teridentifikasi.
    Faktor yang telah diuji dan tereliminasi: radiasi, mesh, pemilihan permukaan,
