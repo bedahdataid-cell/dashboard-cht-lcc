@@ -214,34 +214,46 @@ def npv_energi(Q_loss_W: float,
     return total
 
 
-def luas_selimut(L_mm: float) -> float:
+def luas_selimut(L_mm: float,
+                  r_luar_wadah: float = R_LUAR_WADAH,
+                  tinggi_wadah: float = TINGGI_WADAH) -> float:
     """Luas selimut glasswool (m2) — silinder pd radius rata-rata + 2 cincin annulus.
 
     Glasswool membungkus dinding samping saja (bukan alas/tutup) — sesuai keputusan
-    metodologi §2.6 poin 7. Radius dalam = radius luar wadah (60mm), radius luar
-    = 60mm + L. Luas dihitung pd radius rata-rata (representasi volume material).
+    metodologi §2.6 poin 7. Radius dalam = radius luar wadah, radius luar
+    = radius wadah + L. Luas dihitung pd radius rata-rata (representasi volume
+    material).
+
+    r_luar_wadah, tinggi_wadah (meter): dimensi panci. Default = Q2-8012
+    (60 mm / 110 mm). Berikan nilai lain untuk menghitung panci ukuran berbeda —
+    hasil optimasi (L*, LCC) akan menyesuaikan geometri baru.
     """
     if L_mm <= 0:
         return 0.0
     L_m = L_mm / 1000.0
-    r_in, r_out = R_LUAR_WADAH, R_LUAR_WADAH + L_m
+    r_in, r_out = r_luar_wadah, r_luar_wadah + L_m
     r_avg = 0.5 * (r_in + r_out)
-    A_sisi = 2 * np.pi * r_avg * TINGGI_WADAH          # selimut silinder
+    A_sisi = 2 * np.pi * r_avg * tinggi_wadah          # selimut silinder
     A_cincin = 2 * np.pi * (r_out**2 - r_in**2)        # 2 annulus (atas + bawah)
     return A_sisi + A_cincin
 
 
 def biaya_investasi(L_mm: float,
                      harga_per_m2_mm: float = HARGA_GW_PER_M2_MM,
-                     markup: float = MARKUP_PASANG) -> float:
+                     markup: float = MARKUP_PASANG,
+                     r_luar_wadah: float = R_LUAR_WADAH,
+                     tinggi_wadah: float = TINGGI_WADAH) -> float:
     """Biaya investasi glasswool (Rp) = material x markup pemasangan.
 
     Material: luas selimut (m2) x tebal (mm) x harga (Rp/m2/mm) — proposal Tabel 9.
     Pemasangan: faktor markup 1,2 x biaya material (proposal Tabel 9).
+
+    r_luar_wadah, tinggi_wadah (meter): dimensi panci — lihat luas_selimut().
     """
     if L_mm <= 0:
         return 0.0
-    c_material = luas_selimut(L_mm) * L_mm * harga_per_m2_mm
+    c_material = luas_selimut(L_mm, r_luar_wadah=r_luar_wadah,
+                              tinggi_wadah=tinggi_wadah) * L_mm * harga_per_m2_mm
     return c_material * markup
 
 
@@ -252,15 +264,25 @@ def lcc_total(L_mm: float,
                n_tahun: int = UMUR_ANALISIS,
                tarif: float = TARIF_KWH,
                jam: float = JAM_OPERASI,
-               harga_per_m2_mm: float = HARGA_GW_PER_M2_MM) -> float:
+               harga_per_m2_mm: float = HARGA_GW_PER_M2_MM,
+               r_luar_wadah: float = R_LUAR_WADAH,
+               tinggi_wadah: float = TINGGI_WADAH) -> float:
     """
     LCC_total(L) = Investasi(L) + NPV_Energi(Q(L))
     Minimal di L* (titik optimum).
+
+    r_luar_wadah, tinggi_wadah (meter): dimensi panci — lihat luas_selimut().
+    CATATAN: poly (regresi Q(L)) tetap dari data simulasi Q2-8012. Mengubah
+    dimensi panci di sini mengubah biaya investasi glasswool, TAPI TIDAK
+    mengubah kurva Q(L) — itu perlu simulasi CHT baru untuk geometri lain.
+    Perlakukan hasil pada dimensi selain 60mm/110mm sebagai perkiraan biaya,
+    bukan hasil simulasi CHT yang tervalidasi.
     """
     Q = float(poly(L_mm))
     Q = max(Q, 0.1)   # cegah negatif dari ekstrapolasi
 
-    invest = biaya_investasi(L_mm, harga_per_m2_mm=harga_per_m2_mm)
+    invest = biaya_investasi(L_mm, harga_per_m2_mm=harga_per_m2_mm,
+                             r_luar_wadah=r_luar_wadah, tinggi_wadah=tinggi_wadah)
     npv_e  = npv_energi(Q, rate=rate, inflasi=inflasi, n_tahun=n_tahun,
                          tarif=tarif, jam=jam)
     return invest + npv_e
