@@ -7,6 +7,8 @@ dengan model *Life Cycle Cost* (LCC) berbasis ISO 15686-5:2017.
 **Penelitian Hibah Internal LPPM Universitas Mayasari Bakti (UMB) 2026**
 Peneliti: Bakti Alpihuda, S.T., M.T. — Program Studi Teknik Mesin, UMB Tasikmalaya
 
+**🔗 Dashboard live:** [dashboard-cht-lcc-mbuvycwgrfnuumvhexnriv.streamlit.app](https://dashboard-cht-lcc-mbuvycwgrfnuumvhexnriv.streamlit.app/)
+
 ---
 
 ## Latar Belakang
@@ -91,7 +93,7 @@ Dashboard memakai navigasi multi-halaman (`st.navigation`), bukan satu file
 tunggal — supaya tiap topik (panduan, hasil, temuan, dsb.) mudah dibaca dan
 dinavigasi terpisah.
 
-```
+```text
 streamlit_app.py         Entry point: konfigurasi halaman + navigasi
 app_core.py               Parameter sidebar & seluruh perhitungan (di-cache),
                            dipanggil oleh semua halaman
@@ -127,7 +129,7 @@ dijaga 95 °C (Model B), ambien 27 °C, gravitasi −9,81 m/s² arah Y, radiasi
 
 **Regresi Q(L)** — model resistansi seri:
 
-```
+```text
 Q(L) = Q∞ + A / (B + L)
 ```
 
@@ -136,7 +138,7 @@ yang secara fisis merepresentasikan rugi panas lewat tutup yang tidak diinsulasi
 
 **Model LCC** — ISO 15686-5:2017, pendekatan *Net Present Value*:
 
-```
+```text
 LCC(L) = C_inv(L) + Σ [E_loss(L) × tarif × (1+i)^t] / (1+r)^t
 ```
 
