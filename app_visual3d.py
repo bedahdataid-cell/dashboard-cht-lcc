@@ -67,8 +67,15 @@ def _warna_suhu(t_celsius):
     return f"rgb({r},{g},{b})"
 
 
-def _panah_3d(fig, titik_awal, arah, panjang, tebal_batang, warna, teks):
-    """Panah 3D = garis tebal + kerucut (go.Cone) di ujungnya."""
+def _panah_3d(fig, titik_awal, arah, panjang, tebal_batang, warna, teks,
+             label=None, label_posisi="atas"):
+    """Panah 3D = garis tebal + kerucut (go.Cone) di ujungnya.
+
+    label: jika diisi, teks ini ditampilkan PERMANEN (tidak perlu hover)
+    menempel di ujung panah — mis. "Tutup\\n7.02 W". label_posisi menggeser
+    posisi teks relatif ujung panah supaya tidak menimpa kerucut ("atas"
+    menggeser ke +z, "samping" menggeser menjauhi sumbu z).
+    """
     arah = np.array(arah, dtype=float)
     arah = arah / np.linalg.norm(arah)
     ujung = np.array(titik_awal) + arah * panjang
@@ -86,6 +93,19 @@ def _panah_3d(fig, titik_awal, arah, panjang, tebal_batang, warna, teks):
         anchor="tip", colorscale=[[0, warna], [1, warna]],
         showscale=False, hoverinfo="text", text=teks,
     ))
+
+    if label:
+        geser = panjang * 0.16
+        if label_posisi == "atas":
+            titik_label = ujung + np.array([0, 0, geser])
+        else:  # "samping" — geser searah arah panah, menjauhi panci
+            titik_label = ujung + arah * geser
+        fig.add_trace(go.Scatter3d(
+            x=[titik_label[0]], y=[titik_label[1]], z=[titik_label[2]],
+            mode="text", text=[label],
+            textfont=dict(color=warna, size=15, family="sans-serif"),
+            hoverinfo="skip", showlegend=False,
+        ))
 
 
 def diagram_panci_3d(L_mm, Q_dinding=None, Q_tutup=None, T_din=None, T_tut=None,
@@ -201,13 +221,17 @@ def diagram_panci_3d(L_mm, Q_dinding=None, Q_tutup=None, T_din=None, T_tut=None,
     _panah_3d(fig, [r_luar_total + 6, 0, tinggi * 0.5], [1, 0, 0],
              panjang=panjang_panah, tebal_batang=tebal(Q_dinding),
              warna=WARNA["dinding"],
-             teks=f"Rugi lewat dinding: {Q_dinding:.2f} W")
+             teks=f"Rugi lewat dinding: {Q_dinding:.2f} W",
+             label=f"Dinding<br>{Q_dinding:.2f} W", label_posisi="samping")
     _panah_3d(fig, [0, 0, tinggi + tinggi * 0.09], [0, 0, 1],
              panjang=panjang_panah, tebal_batang=tebal(Q_tutup),
              warna=WARNA["tutup"],
-             teks=f"Rugi lewat tutup: {Q_tutup:.2f} W")
+             teks=f"Rugi lewat tutup: {Q_tutup:.2f} W",
+             label=f"Tutup<br>{Q_tutup:.2f} W", label_posisi="atas")
 
-    batas = r_wadah + 20 + panjang_panah + 10
+    # +0.16*panjang_panah krn label teks digeser sejauh itu dari ujung panah
+    # (lihat _panah_3d) -- margin ekstra supaya teks tidak terpotong tepi
+    batas = r_wadah + 20 + panjang_panah * 1.16 + 10
     fig.update_layout(
         height=tinggi_px,
         margin=dict(l=0, r=0, t=10, b=0),
@@ -215,7 +239,7 @@ def diagram_panci_3d(L_mm, Q_dinding=None, Q_tutup=None, T_din=None, T_tut=None,
         scene=dict(
             xaxis=dict(visible=False, range=[-batas, batas]),
             yaxis=dict(visible=False, range=[-batas, batas]),
-            zaxis=dict(visible=False, range=[-10, tinggi + panjang_panah + 20]),
+            zaxis=dict(visible=False, range=[-10, tinggi + panjang_panah * 1.16 + 20]),
             aspectmode="manual",
             aspectratio=dict(x=1, y=1, z=1.05),
             camera=dict(eye=dict(x=1.55, y=-1.35, z=0.9)),
